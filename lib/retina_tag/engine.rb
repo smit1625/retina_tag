@@ -15,8 +15,18 @@ module RetinaTag
           retina_els.slice!(-1)
           retina_path = "#{retina_els.join('.')}@2x.#{extension}"
 
-          if !Rails.application.assets.find_asset(retina_path).nil?
+          if Rails.application.assets.find_asset(retina_path).present?
             hidpi_asset_path = asset_path(retina_path)
+          else
+            manifest_entry = Rails.application.assets_manifest.files.values.find do |entry|
+              entry['logical_path'] == retina_path
+            end
+            if manifest_entry.present?
+              if Rails.application.config.assets.digest
+                retina_path.gsub!('@2x.', "@2x-#{manifest_entry[:digest]}.")
+              end
+              hidpi_asset_path = asset_path(retina_path)
+            end
           end
       rescue
       end
